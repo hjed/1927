@@ -7,6 +7,9 @@
 #include "Map.h"
 #include "Places.h"
 
+#define TRUE  1
+#define FALSE 0
+
 typedef struct vNode *VList;
 
 struct vNode {
@@ -21,6 +24,7 @@ struct MapRep {
     VList connections[NUM_PLACES]; // array of lists
 };
 
+static int inList(VList list, Location loacl);
 static void addConnections(Map);
 
 // Create a new empty graph (for a map)
@@ -62,7 +66,59 @@ void destroyMap(Map g)
 // Add a new edge to the Map/Graph
 void addLink(Map g, Location start, Location end, Transport type)
 {
-    // TODO: implement this for Task 2
+    assert(g != NULL);
+    assert(type >= 0 && type <= ANY);
+    assert((start < NUM_PLACES) && (start >= 0));
+    assert(end < NUM_PLACES && (start >= 0));
+    assert(end != start);
+    //check element isn't already in list
+    //assuming the list is valid we only need to check one direction
+    if(!inList(g->connections[start],end) && !inList(g->connections[end],start)) {
+    
+        //increment edge count
+        g->nE+=2;
+        //add connections
+        
+        //start to end
+        VList next = g->connections[start];
+        if (next) {
+            VList prev = NULL;
+            do {
+                prev = next;
+                next = next->next;
+                
+            } while (next);
+            prev->next = malloc(sizeof (struct vNode));
+            prev->next->v = end;
+            prev->next->type = type;
+            prev->next->next = NULL;
+        } else {
+            g->connections[start] = malloc(sizeof (struct vNode));
+            g->connections[start]->v = end;
+            g->connections[start]->type = type;
+            g->connections[start]->next = NULL;
+        }
+        
+        //end to start
+        next = g->connections[end];
+        if (next) {
+            VList prev = NULL;
+            do {
+                prev = next;
+                next = next->next;
+                
+            } while (next);
+            prev->next = malloc(sizeof (struct vNode));
+            prev->next->v = end;
+            prev->next->type = type;
+            prev->next->next = NULL;
+        } else {
+            g->connections[end] = malloc(sizeof (struct vNode));
+            g->connections[end]->v = start;
+            g->connections[end]->type = type;
+            g->connections[end]->next = NULL;
+        }
+    }
 }
 
 // Display content of Map/Graph
@@ -312,7 +368,7 @@ static void addConnections(Map g)
     addLink(g, DUBLIN, IRISH_SEA, BOAT);
     addLink(g, EDINBURGH, NORTH_SEA, BOAT);
     addLink(g, ENGLISH_CHANNEL, LE_HAVRE, BOAT);
-    addLink(g, ENGLISH_CHANNEL, LONDON, BOAT);
+    addLink(g, ENGLISH_CHANNEL, LONDON, BOAT); 
     addLink(g, ENGLISH_CHANNEL, NORTH_SEA, BOAT);
     addLink(g, ENGLISH_CHANNEL, PLYMOUTH, BOAT);
     addLink(g, GENOA, TYRRHENIAN_SEA, BOAT);
@@ -327,4 +383,16 @@ static void addConnections(Map g)
     addLink(g, NAPLES, TYRRHENIAN_SEA, BOAT);
     addLink(g, ROME, TYRRHENIAN_SEA, BOAT);
 
+}
+
+//itterate through a list and check if the give location is in it
+static int inList(VList list, Location local) {
+    int found = FALSE;
+    while(list && !found) {
+        if  (list->v == local) {
+            found = TRUE;
+        }
+        list=list->next;
+    } 
+    return found;
 }

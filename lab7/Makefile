@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -Werror -g
+CFLAGS=-Wall -Werror -ggdb
 BINS=pl euro conn
 
 all : $(BINS)
