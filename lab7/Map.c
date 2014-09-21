@@ -24,7 +24,7 @@ struct MapRep {
     VList connections[NUM_PLACES]; // array of lists
 };
 
-static int inList(VList list, Location loacl);
+static int inList(VList list, Location local, Transport type);
 static void addConnections(Map);
 
 // Create a new empty graph (for a map)
@@ -73,7 +73,7 @@ void addLink(Map g, Location start, Location end, Transport type)
     assert(end != start);
     //check element isn't already in list
     //assuming the list is valid we only need to check one direction
-    if(!inList(g->connections[start],end) && !inList(g->connections[end],start)) {
+    if(!inList(g->connections[start],end,type) && !inList(g->connections[end],start,type)) {
     
         //increment edge count
         g->nE+=2;
@@ -109,7 +109,7 @@ void addLink(Map g, Location start, Location end, Transport type)
                 
             } while (next);
             prev->next = malloc(sizeof (struct vNode));
-            prev->next->v = end;
+            prev->next->v = start;
             prev->next->type = type;
             prev->next->next = NULL;
         } else {
@@ -169,8 +169,32 @@ int numE(Map g, Transport type)
 // Returns 0 if no direct connection (i.e. not adjacent in graph)
 int connections(Map g, Location start, Location end, Transport type[])
 {
-    // TODO: implement this for Task 3
-    return 0; // to keep gcc happy
+    assert(g != NULL);
+    assert((start < NUM_PLACES) && (start >= 0));
+    assert(end < NUM_PLACES && (start >= 0));
+    
+    int numConnections  = 0;
+    
+    //start to end
+    VList next = g->connections[start];
+    if (next) {
+        VList prev = NULL;
+        do {
+            prev = next;
+            
+            next = next->next;
+            if(prev->v == end) {
+                type[numConnections] = prev->type;
+                numConnections++;
+            }
+        } while (next);
+    }
+    
+    //if(numConnections) {
+    //    numConnections++;
+    //}
+    
+    return numConnections;
 }
 
 // Add edges to Graph representing map of Europe
@@ -386,10 +410,10 @@ static void addConnections(Map g)
 }
 
 //itterate through a list and check if the give location is in it
-static int inList(VList list, Location local) {
+static int inList(VList list, Location local, Transport type) {
     int found = FALSE;
     while(list && !found) {
-        if  (list->v == local) {
+        if  (list->v == local && list->type == type) {
             found = TRUE;
         }
         list=list->next;
