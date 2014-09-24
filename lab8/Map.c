@@ -140,15 +140,47 @@ int numE(Map g, Transport type)
 // Returns number of vertices in path otherwise
 int shortestPath(Map g, Location start, Location end, Location path[], Transport trans[])
 {
-	// TODO: replace the code by a shortest path algorithm
+    int pathLength = 0;
+    Queue queue = newQueue();
 
-	// a valid path from London to Paris
-	// just to show what kinds of values are in the arrays
-   path[0] = LONDON; trans[0] = ANY;
-   path[1] = PLYMOUTH; trans[1] = ROAD;
-   path[2] = LE_HAVRE; trans[2] = BOAT;
-   path[3] = PARIS; trans[3] = RAIL;
-   return 4;
+    Map paths = malloc(sizeof(struct MapRep));
+    paths->nE = 0;
+    paths->nV = 0; 
+    vNode ends[]
+    path[0] = start;
+    int arrayLength = 1;
+    QueueJoin(queue, start);
+    Location temp = 0;
+
+    while (!QueueIsEmpty(queue)) {
+        temp = QueueLeave(queue);
+        if (temp == end) {
+            break;
+        }
+        VList next = g->connections[temp];
+        if (next) {
+            VList prev = NULL;
+
+            do {
+                prev = next;
+                next = next->next;
+
+                int i = 0;
+
+                /*while(v[i] != prev->v && v[i] != NOWHERE) {
+                    i++;
+                }
+                if(v[i] == NOWHERE) {
+                    QueueJoin(queue, prev->v);
+                    v[arrayLength] = prev->v;
+                    arrayLength++;
+                }*/
+
+            } while (next);
+        }
+    }     
+
+   return pathLength;
 }
 
 // Add edges to Graph representing map of Europe
