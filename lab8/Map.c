@@ -7,7 +7,11 @@
 #include "Map.h"
 #include "Places.h"
 
+#define TRUE 1
+#define FALSE 0
+
 typedef struct vNode *VList;
+
 
 struct vNode {
    Location  v;   // ALICANTE, etc
@@ -21,6 +25,7 @@ struct MapRep {
    VList connections[NUM_PLACES]; // array of lists
 };
 
+static int recursiveBFS(Map g, VList ignoreList, Location start, Location end, Location path[], Transport trans[], int depth);
 static void addConnections(Map);
 
 // Create a new empty graph (for a map)
@@ -140,47 +145,61 @@ int numE(Map g, Transport type)
 // Returns number of vertices in path otherwise
 int shortestPath(Map g, Location start, Location end, Location path[], Transport trans[])
 {
-    int pathLength = 0;
-    Queue queue = newQueue();
+    int result = recursiveBFS(g,NULL,start,end,path,trans,0);
+    printf("result %d",result);
+    return result ; 
+}
 
-    Map paths = malloc(sizeof(struct MapRep));
-    paths->nE = 0;
-    paths->nV = 0; 
-    vNode ends[]
-    path[0] = start;
-    int arrayLength = 1;
-    QueueJoin(queue, start);
-    Location temp = 0;
 
-    while (!QueueIsEmpty(queue)) {
-        temp = QueueLeave(queue);
-        if (temp == end) {
-            break;
-        }
-        VList next = g->connections[temp];
-        if (next) {
-            VList prev = NULL;
-
-            do {
-                prev = next;
-                next = next->next;
-
-                int i = 0;
-
-                /*while(v[i] != prev->v && v[i] != NOWHERE) {
-                    i++;
+static int recursiveBFS(Map g, VList ignoreList, Location start, Location end, Location path[], Transport trans[], int depth) {
+    if(start == end) {
+        return depth;
+        printf("end %d\n", depth);
+    } else {
+        VList curr = g->connections[start];
+        int updated = FALSE;
+        while(curr != NULL) {
+            VList ignore = ignoreList;
+            int ignoreIt = FALSE;
+            while(ignore != NULL ) {
+                if(ignore->v == curr->v) {
+                    ignoreIt = TRUE;
+                    break;
+                } 
+                ignore = ignore->next;
+            }
+            if(!ignoreIt) {
+                if(!updated) { 
+                    if(ignoreList) {
+                        //insert as the second element, so recursive functions update the list
+                        VList next = ignoreList->next;
+                        VList newList = malloc(sizeof(struct vNode));
+                        newList->next = next;
+                        newList->v = start;
+                        ignoreList->next = newList;
+                    } else {
+                        VList newList = malloc(sizeof(struct vNode));
+                         newList->next = NULL;
+                        newList->v = start;
+                        ignoreList = newList;
+                    }
+                    updated = TRUE;
                 }
-                if(v[i] == NOWHERE) {
-                    QueueJoin(queue, prev->v);
-                    v[arrayLength] = prev->v;
-                    arrayLength++;
-                }*/
-
-            } while (next);
+                path[depth] = start;
+                trans[depth] = curr->type;
+                int result = recursiveBFS(g,ignoreList,curr->v, end, path,trans,depth+1);
+                if(result>depth) {
+                    return result;
+                    printf("%d\n\n\n",depth);
+                } else {
+                    path[depth] = NOWHERE;
+                }
+            }
+            curr = curr->next;
         }
-    }     
-
-   return pathLength;
+         printf("%d\n\n\n",depth);
+        return -1;
+    }
 }
 
 // Add edges to Graph representing map of Europe

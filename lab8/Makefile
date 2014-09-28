@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -Werror -g
+CFLAGS=-Wall -Werror -gdwarf-2
 BINS=pl path
 
 all : $(BINS)
