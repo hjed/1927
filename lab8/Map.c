@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "Queue.h"
 #include "Map.h"
 #include "Places.h"
 
@@ -24,8 +25,7 @@ struct MapRep {
    int   nE; // #edges
    VList connections[NUM_PLACES]; // array of lists
 };
-
-static int recursiveBFS(Map g, VList ignoreList, Location start, Location end, Location path[], Transport trans[], int depth);
+ 
 static void addConnections(Map);
 
 // Create a new empty graph (for a map)
@@ -145,62 +145,78 @@ int numE(Map g, Transport type)
 // Returns number of vertices in path otherwise
 int shortestPath(Map g, Location start, Location end, Location path[], Transport trans[])
 {
-    int result = recursiveBFS(g,NULL,start,end,path,trans,0);
-    printf("result %d",result);
-    return result ; 
-}
-
-
-static int recursiveBFS(Map g, VList ignoreList, Location start, Location end, Location path[], Transport trans[], int depth) {
-    if(start == end) {
-        return depth;
-        printf("end %d\n", depth);
-    } else {
-        VList curr = g->connections[start];
-        int updated = FALSE;
-        while(curr != NULL) {
-            VList ignore = ignoreList;
-            int ignoreIt = FALSE;
-            while(ignore != NULL ) {
-                if(ignore->v == curr->v) {
-                    ignoreIt = TRUE;
-                    break;
-                } 
-                ignore = ignore->next;
-            }
-            if(!ignoreIt) {
-                if(!updated) { 
-                    if(ignoreList) {
-                        //insert as the second element, so recursive functions update the list
-                        VList next = ignoreList->next;
-                        VList newList = malloc(sizeof(struct vNode));
-                        newList->next = next;
-                        newList->v = start;
-                        ignoreList->next = newList;
-                    } else {
-                        VList newList = malloc(sizeof(struct vNode));
-                         newList->next = NULL;
-                        newList->v = start;
-                        ignoreList = newList;
-                    }
-                    updated = TRUE;
-                }
-                path[depth] = start;
-                trans[depth] = curr->type;
-                int result = recursiveBFS(g,ignoreList,curr->v, end, path,trans,depth+1);
-                if(result>depth) {
-                    return result;
-                    printf("%d\n\n\n",depth);
-                } else {
-                    path[depth] = NOWHERE;
-                }
-            }
-            curr = curr->next;
-        }
-         printf("%d\n\n\n",depth);
-        return -1;
+    //create a queue to hold the next vertex we want to visit
+    Queue q = newQueue();
+    //and a linked list to store those we have visited
+    VList visited  = malloc(sizeof(struct vNode));
+    //store pointers to a backwards tree we can use to get the path
+    //this is a memory heavy, but fast way to do this
+    VList visitedArray[g->nV];
+    int listLength[g->nV];
+    int x;
+    for(x = 0; x < g->nV; x++) {
+        listLength[x] =0;
+        visitedArray[x] = NULL;
     }
+    //put the start point on the queue
+    QueueJoin(q,start);
+    
+    while(!QueueIsEmpty(q)) {
+        //get the next item on the queue
+        Location temp = QueueLeave(q);
+        
+       if (temp == end) {
+            //loop up through the backwards tree and put in the array
+            VList next = visitedArray[temp];
+            int i = listLength[temp];
+            while(next != NULL) {
+                path[i] = next->v;
+                trans[i] = next->type;
+                i--;
+                next = next->next;
+                
+            }
+            return listLength[temp]+1;
+        } else {
+            VList connections = g->connections[temp];
+            //go through all of the vertexs adjacent to temp
+            while(connections != NULL) {
+                //check that connections has not been visited
+                VList ignore = visited;
+                //stops the first one being 
+                while(ignore != NULL) {
+                    if(ignore->v == connections->v) {
+                        break;
+                    }
+                    ignore = ignore->next;
+                }
+                //if its not NULL the array broke early
+                if(!ignore || !visited) {
+                    //add the the q
+                    QueueJoin(q,connections->v);
+                    //add to visited
+                    VList visitedNode = malloc(sizeof(struct vNode));
+                    visitedNode->next = visited;
+                    visited = visitedNode;
+                    visited->v = connections->v;
+                    visited->type = connections->type;
+                    //add to our backwards tree
+                    visitedArray[connections->v] = malloc(sizeof(struct vNode));
+                    visitedArray[connections->v]->v = connections->v;
+                    visitedArray[connections->v]->type = connections->type;
+                    visitedArray[connections->v]->next = visitedArray[temp];
+                    listLength[connections->v] = listLength[temp]+1;
+                }            
+                connections = connections->next;
+            }
+        }
+    }
+    
+    return -1; 
 }
+
+
+
 
 // Add edges to Graph representing map of Europe
 static void addConnections(Map g)

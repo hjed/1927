@@ -7,7 +7,7 @@ all : $(BINS)
 pl : pl.o Places.o
 pl.o : pl.c Places.h
 
-path : path.o Map.o Places.o
+path : path.o Map.o Places.o Queue.o
 path.o : path.c Map.c Places.h
 
 Places.o : Places.c Places.h
